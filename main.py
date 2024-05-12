@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 import os
-from flask_lt import run_with_lt
 import torch
 from datasets import load_dataset
 from transformers import (
@@ -91,7 +90,6 @@ def llm_response(user_input,model,tokenizer):
 
 # Create a Flask application instance
 app = Flask(__name__)
-run_with_lt(app)
 
 model, tokenizer = load_model()
 # Define a route and a function to handle requests to that route
