@@ -245,7 +245,7 @@ border-radius: 0 0 15px 15px !important;
 	bottom: -10px;
   }
   .typing-indicator span {
-	height: 15px;
+	height: 5px;
 	width: 15px;
 	float: left;
 	margin: 0 1px;
