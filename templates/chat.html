@@ -92,10 +92,11 @@
 							str_time +
 							"</span></div></div>";
 						$("#messageFormeight").append($.parseHTML(botHtml));
-		
+						var chatBox = document.querySelector('.chat');
+						chatBox.scrollTop = chatBox.scrollHeight;
+
 						// Enable the textbox
 						$("#text").prop("disabled", false);
-						$(".chat").scrollTop($(".chat")[0].scrollHeight);
 					});
 					event.preventDefault();
 				});
