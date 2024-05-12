@@ -104,4 +104,4 @@ def chat():
      return llm_response(user_input,model,tokenizer)
 # Run the Flask application
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
