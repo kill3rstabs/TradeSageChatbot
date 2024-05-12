@@ -51,7 +51,7 @@
 			$(document).ready(function() {
 				$("#messageArea").on("submit", function(event) {
 					// Disable the textbox
-					
+					$("#text").prop("disabled", true);
 		
 					const date = new Date();
 					const hour = date.getHours();
@@ -71,9 +71,9 @@
 		
 					// Add typing animation
 					var typingHtml =
-						"<div class='d-flex justify-content-start mb-4'><div class='img_cont_msg'><img src='https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png' class='rounded-circle user_img_msg'></div><div class='msg_cotainer'><span class='typing-indicator'></span></div></div>";
+						'<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/f1pCMnW/icon.jpg" class="rounded-circle user_img_msg"></div><div class="msg_cotainer"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div>';
 					$("#messageFormeight").append(typingHtml);
-					$("#text").prop("disabled", true);
+		
 					$.ajax({
 						data: {
 							msg: rawText,
@@ -82,10 +82,10 @@
 						url: "/get",
 					}).done(function(data) {
 						// Remove typing animation
-						$(".typing-indicator").remove();
+						$(".typing-indicator").parent().remove();
 		
 						var botHtml =
-							'<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">' +
+							'<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/f1pCMnW/icon.jpg" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">' +
 							data +
 							'<span class="msg_time">' +
 							str_time +
@@ -99,6 +99,7 @@
 				});
 			});
 		</script>
+		
 		
         
     </body>
