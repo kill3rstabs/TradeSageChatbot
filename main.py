@@ -1,5 +1,8 @@
 from flask import Flask, render_template, request, jsonify
-from flask_ngrok import run_with_ngrok
+import os
+import threading
+from flask import Flask
+from pyngrok import ngrok, conf
 import os
 import torch
 from datasets import load_dataset
@@ -14,10 +17,19 @@ from transformers import (
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from trl import SFTTrainer
 
+
+print("Enter your authtoken, which can be copied from https://dashboard.ngrok.com/get-started/your-authtoken")
+conf.get_default().auth_token = '2gNMhbpo8ig9FE8ONVhcKABcrrK_45eTUN3jkKgKf2t8dDLXi'
+
 # Create a Flask application instance
 app = Flask(__name__)
-run_with_ngrok(app) 
 
+# Open a ngrok tunnel to the HTTP server
+public_url = ngrok.connect(5000).public_url
+print(" * ngrok tunnel \"{}\" -> \"http://127.0.0.1:{}/\"".format(public_url, 5000))
+
+# Update any base URLs to use the public ngrok URL
+app.config["BASE_URL"] = public_url
 
 def load_model():
   bnb_config = BitsAndBytesConfig(
@@ -104,4 +116,4 @@ def chat():
      return llm_response(user_input,model,tokenizer)
 # Run the Flask application
 if __name__ == '__main__':
-    app.run()
+    threading.Thread(target=app.run, kwargs={"use_reloader": False}).start()
