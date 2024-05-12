@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from flask_ngrok import run_with_ngrok
+from flask_lt import run_with_lt
 import os
 import torch
 from datasets import load_dataset
@@ -16,7 +16,7 @@ from trl import SFTTrainer
 
 # Create a Flask application instance
 app = Flask(__name__)
-run_with_ngrok(app)
+run_with_lt(app)
 
 
 def load_model():
