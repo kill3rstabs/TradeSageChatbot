@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from flask_ngrok import run_with_ngrok
 import os
 import torch
 from datasets import load_dataset
@@ -90,6 +91,7 @@ def llm_response(user_input,model,tokenizer):
 
 # Create a Flask application instance
 app = Flask(__name__)
+run_with_ngrok(app)
 
 model, tokenizer = load_model()
 # Define a route and a function to handle requests to that route
@@ -103,4 +105,4 @@ def chat():
      return llm_response(user_input,model,tokenizer)
 # Run the Flask application
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,port=5000)
