@@ -14,6 +14,11 @@ from transformers import (
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from trl import SFTTrainer
 
+# Create a Flask application instance
+app = Flask(__name__)
+run_with_ngrok(app)
+
+
 def load_model():
   bnb_config = BitsAndBytesConfig(
       load_in_4bit=True,
@@ -87,12 +92,6 @@ def llm_response(user_input,model,tokenizer):
   return response
 
 
-
-
-# Create a Flask application instance
-app = Flask(__name__)
-run_with_ngrok(app)
-
 model, tokenizer = load_model()
 # Define a route and a function to handle requests to that route
 @app.route('/')
@@ -105,4 +104,4 @@ def chat():
      return llm_response(user_input,model,tokenizer)
 # Run the Flask application
 if __name__ == '__main__':
-    app.run(debug=True,port=5000)
+    app.run(debug=True)
