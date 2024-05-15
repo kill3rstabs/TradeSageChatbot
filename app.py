@@ -16,7 +16,20 @@ from transformers import (
 )
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from trl import SFTTrainer
-
+import logging
+import sys
+import torch
+from llama_index.llms.huggingface import HuggingFaceLLM
+from llama_index.core import PromptTemplate
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core import VectorStoreIndex
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core import Settings
+from llama_index.core import Settings
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core import VectorStoreIndex
+from IPython.display import Markdown, display
+from llama_index.core import VectorStoreIndex
 
 print("Enter your authtoken, which can be copied from https://dashboard.ngrok.com/get-started/your-authtoken")
 conf.get_default().auth_token = '2gNMhbpo8ig9FE8ONVhcKABcrrK_45eTUN3jkKgKf2t8dDLXi'
@@ -32,88 +45,73 @@ print(" * ngrok tunnel \"{}\" -> \"http://127.0.0.1:{}/\"".format(public_url, 50
 app.config["BASE_URL"] = public_url
 
 
-  bnb_config = BitsAndBytesConfig(
-      load_in_4bit=True,
-      bnb_4bit_use_double_quant=True,
-      bnb_4bit_quant_type="nf4",
-      bnb_4bit_compute_dtype=torch.bfloat16
-  )
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
 
-  PEFT_MODEL = "Lohit20/fyp"
+LLAMA2_7B_CHAT = "meta-llama/Llama-2-7b-chat-hf"
 
 
-  config = PeftConfig.from_pretrained(PEFT_MODEL,token='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')
-  model = AutoModelForCausalLM.from_pretrained(
-      config.base_model_name_or_path,
-      token='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',
-      return_dict=True,
-      quantization_config=bnb_config,
-      device_map="auto",
-      trust_remote_code=True
-  )
+selected_model = LLAMA2_7B_CHAT
 
-  tokenizer=AutoTokenizer.from_pretrained(config.base_model_name_or_path,token='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')
-  tokenizer.pad_token = tokenizer.eos_token
+SYSTEM_PROMPT = """You are an AI assistant that answers questions in a friendly manner, based on the given source documents. Here are some rules you always follow:
+- Generate human readable output, avoid creating output with gibberish text.
+- Generate only the requested output, don't include any other language before or after the requested output.
+- Never say thank you, that you are happy to help, that you are an AI agent, etc. Just answer directly.
+- Generate professional language typically used in business documents in North America.
+- Never generate offensive or foul language.
+"""
 
-  model = PeftModel.from_pretrained(model, PEFT_MODEL)
-  return model, tokenizer
+query_wrapper_prompt = PromptTemplate(
+    "[INST]<<SYS>>\n" + SYSTEM_PROMPT + "<</SYS>>\n\n{query_str}[/INST] "
+)
 
+llm = HuggingFaceLLM(
+    context_window=4096,
+    max_new_tokens=2048,
+    generate_kwargs={"temperature": 0.0, "do_sample": False},
+    query_wrapper_prompt=query_wrapper_prompt,
+    tokenizer_name=selected_model,
+    model_name=selected_model,
+    device_map="auto",
+    # change these settings below depending on your GPU
+    model_kwargs={"torch_dtype": torch.float16, "load_in_8bit": True},
+)
 
-
-  generation_config = model.generation_config
-  generation_config.max_new_tokens = 1024
-  generation_config.temperature = 0.95
-  generation_config.top_p = 0.9
-  generation_config.num_return_sequences = 1
-  generation_config.pad_token_id = tokenizer.eos_token_id
-  generation_config.eos_token_id = tokenizer.eos_token_id
-  system_message = """You are being fine-tuned to serve as a trade analyst. Your role is to interpret trading data accurately and provide clear, informed explanations and insights based on the data.
-  Follow these rules:
-  1.Understand Queries:Accurately interpret user queries related to trading data, such as trends, volume, price changes, and market sentiment
-  2.Data Analysis:Analyze historical data to identify patterns or trends.
-  3.Explanation and Communication:
-    -Provide explanations that reflect a deep understanding of trading concepts and data analysis.
-    -Explain the implications of the data in terms of trading strategy and market behavior.
-    -Use clear, professional language appropriate for financial analysis.
-    -Incorporate relevant financial theories or models as necessary to support your analysis.
-  4.Response Structure:
-    -Begin with a direct answer to the user’s question.
-    -Follow with a detailed explanation of the analysis you performed.
-    -Conclude with practical insights or recommendations based on the data.
-  5.Accuracy and Reliability:
-    -Ensure all data interpretations are accurate and based on reliable data sources.
-    -Clearly indicate any assumptions or limitations in your analysis.
-  6.Engagement:
-    -Respond to follow-up questions to clarify or delve deeper into specific aspects of the analysis.
-    -Maintain an engaging and professional tone throughout the conversation."""
-
-  # user_input = "I want to understand Chile's top 3 import suppliers in 2020. Could you provide details on these suppliers, including the countries and their respective total trade values?"
-
-  prompt = f"<s>[INST] <<SYS>>{system_message}<</SYS>>{user_input} [/INST]"
-
-  device = "cuda"
-  encoding = tokenizer(prompt, return_tensors="pt").to(device)
-  with torch.inference_mode():
-    outputs = model.generate(
-        input_ids = encoding.input_ids,
-        attention_mask = encoding.attention_mask,
-        generation_config = generation_config
-    )
-  response=tokenizer.batch_decode(outputs.detach().cpu().numpy(), skip_special_tokens=True)[0][len(prompt)-1:]
-  return response
+embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
+Settings.llm = llm
+Settings.embed_model = embed_model
 
 
-model, tokenizer = load_model()
-# Define a route and a function to handle requests to that route
+
+
+documents =SimpleDirectoryReader(input_files=["/content/data2.csv"]).load_data()
+
+
+index = VectorStoreIndex.from_documents(documents)
+# set Logging to DEBUG for more detailed outputs
+query_engine = index.as_query_engine()
+
+
+
+
+
+
+
+
+
+
+
+
+
 @app.route('/')
 def hello_world():
     return render_template('chat.html')
 
 @app.route('/get', methods=['GET','POST'])
 def chat():
-     user_input = request.form["msg"]
-     return llm_response(user_input,model,tokenizer)
+     user_input = request.form["msg"] 
+     return query_engine.query(user_input)
 # Run the Flask application
 if __name__ == '__main__':
     threading.Thread(target=app.run, kwargs={"use_reloader": False}).start()
