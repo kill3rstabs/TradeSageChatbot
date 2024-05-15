@@ -4,18 +4,6 @@ import threading
 from flask import Flask
 from pyngrok import ngrok, conf
 import os
-import torch
-from datasets import load_dataset
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    TrainingArguments,
-    pipeline,
-    logging,
-)
-from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
-from trl import SFTTrainer
 import logging
 import sys
 import torch
@@ -85,7 +73,7 @@ Settings.embed_model = embed_model
 
 
 
-documents =SimpleDirectoryReader(input_files=["/data2.csv"]).load_data()
+documents =SimpleDirectoryReader(input_files=["data2.csv"]).load_data()
 
 
 index = VectorStoreIndex.from_documents(documents)
@@ -111,7 +99,7 @@ def hello_world():
 @app.route('/get', methods=['GET','POST'])
 def chat():
      user_input = request.form["msg"] 
-     return query_engine.query(user_input)
+     return str(query_engine.query(user_input))
 # Run the Flask application
 if __name__ == '__main__':
     threading.Thread(target=app.run, kwargs={"use_reloader": False}).start()
