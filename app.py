@@ -85,7 +85,7 @@ Settings.embed_model = embed_model
 
 
 
-documents =SimpleDirectoryReader(input_files=["/content/data2.csv"]).load_data()
+documents =SimpleDirectoryReader(input_files=["/data2.csv"]).load_data()
 
 
 index = VectorStoreIndex.from_documents(documents)
