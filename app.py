@@ -20,7 +20,7 @@ from IPython.display import Markdown, display
 from llama_index.core import VectorStoreIndex
 
 print("Enter your authtoken, which can be copied from https://dashboard.ngrok.com/get-started/your-authtoken")
-conf.get_default().auth_token = '2gNMhbpo8ig9FE8ONVhcKABcrrK_45eTUN3jkKgKf2t8dDLXi'
+conf.get_default().auth_token = ''
 
 # Create a Flask application instance
 app = Flask(__name__)
